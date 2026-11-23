@@ -230,15 +230,8 @@ try {
             imagealphablending($gdImg, true);
             imagesavealpha($gdImg, true);
 
-            // Lapisan hitam semi-transparan pekat (~88% kegelapan) agar teks kontras tinggi & jelas
-            $overlayColor = imagecolorallocatealpha($gdImg, 10, 15, 26, 16);
-            imagefilledrectangle($gdImg, 0, $bannerY, $imgWidth, $imgHeight, $overlayColor);
-
-            // Garis pembatas aksen Sky Blue di puncak watermark
-            $accentLine = imagecolorallocate($gdImg, 56, 189, 248);
-            imageline($gdImg, 0, $bannerY, $imgWidth, $bannerY, $accentLine);
-            imageline($gdImg, 0, $bannerY + 1, $imgWidth, $bannerY + 1, $accentLine);
-
+            // Teks watermark dicetak langsung pada piksel foto (tanpa kotak background)
+            $blackShadow = imagecolorallocate($gdImg, 0, 0, 0);
             $whiteColor = imagecolorallocate($gdImg, 255, 255, 255);
             $yellowColor = imagecolorallocate($gdImg, 254, 240, 138); // Kuning terang untuk waktu & detik
             $greenColor = imagecolorallocate($gdImg, 52, 211, 153);   // Hijau mint untuk GPS & status
