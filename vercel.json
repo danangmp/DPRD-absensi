@@ -5,36 +5,49 @@
   "outputDirectory": ".",
   "functions": {
     "api/*.php": {
-      "runtime": "vercel-php@0.7.3"
+      "runtime": "vercel-php@0.7.3",
+      "includeFiles": "{php-backend/**,api/**}"
     }
   },
   "routes": [
     {
-      "src": "/client/(.*)",
+      "src": "^/client/(.*)$",
       "status": 404,
       "dest": "/404"
     },
     {
-      "src": "/api/(.*)",
+      "src": "^/php-backend/api/(.*)\\.php$",
       "dest": "/api/$1.php"
     },
     {
-      "src": "/assets/(.*)",
+      "src": "^/php-backend/api/(.*)$",
+      "dest": "/api/$1.php"
+    },
+    {
+      "src": "^/api/(.*)\\.php$",
+      "dest": "/api/$1.php"
+    },
+    {
+      "src": "^/api/(.*)$",
+      "dest": "/api/$1.php"
+    },
+    {
+      "src": "^/assets/(.*)$",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       },
       "dest": "/assets/$1"
     },
     {
-      "src": "/logo.jpg",
+      "src": "^/logo.jpg$",
       "dest": "/logo.jpg"
     },
     {
-      "src": "/favicon.svg",
+      "src": "^/favicon.svg$",
       "dest": "/favicon.svg"
     },
     {
-      "src": "/icons.svg",
+      "src": "^/icons.svg$",
       "dest": "/icons.svg"
     },
     {
@@ -42,7 +55,7 @@
       "dest": "/index.html"
     },
     {
-      "src": "/(.*)",
+      "src": "^/(.*)$",
       "dest": "/index.html"
     }
   ]
