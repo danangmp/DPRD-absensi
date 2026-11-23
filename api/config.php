@@ -55,12 +55,26 @@ try {
             setting_value VARCHAR(255) NOT NULL
         )");
         $pdo->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('master_pin', '1234') ON CONFLICT (setting_key) DO NOTHING");
+        
+        $pdo->exec("CREATE TABLE IF NOT EXISTS attendance_photos (
+            filename VARCHAR(255) PRIMARY KEY,
+            image_data TEXT NOT NULL,
+            mime_type VARCHAR(50) DEFAULT 'image/jpeg',
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )");
     } else {
         $pdo->exec("CREATE TABLE IF NOT EXISTS settings (
             setting_key VARCHAR(50) PRIMARY KEY,
             setting_value VARCHAR(255) NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES ('master_pin', '1234')");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS attendance_photos (
+            filename VARCHAR(255) PRIMARY KEY,
+            image_data LONGTEXT NOT NULL,
+            mime_type VARCHAR(50) DEFAULT 'image/jpeg',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
 } catch (PDOException $e) {

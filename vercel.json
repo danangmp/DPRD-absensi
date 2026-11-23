@@ -32,6 +32,14 @@
       "dest": "/api/$1.php"
     },
     {
+      "src": "^/php-backend/uploads/(.*)$",
+      "dest": "/api/image.php?file=$1"
+    },
+    {
+      "src": "^/uploads/(.*)$",
+      "dest": "/api/image.php?file=$1"
+    },
+    {
       "src": "^/assets/(.*)$",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"

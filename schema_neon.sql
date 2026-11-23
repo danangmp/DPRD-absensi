@@ -44,3 +44,14 @@ ON CONFLICT (setting_key) DO NOTHING;
 -- Indeks untuk performa query rekapitulasi tanggal
 CREATE INDEX IF NOT EXISTS idx_attendances_user_id ON attendances(user_id);
 CREATE INDEX IF NOT EXISTS idx_attendances_tanggal ON attendances(tanggal);
+
+-- ==========================================================
+-- 4. Tabel attendance_photos (Penyimpanan Foto Presensi Cloud)
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS attendance_photos (
+    filename VARCHAR(255) PRIMARY KEY,
+    image_data TEXT NOT NULL,
+    mime_type VARCHAR(50) DEFAULT 'image/jpeg',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+

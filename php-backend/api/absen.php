@@ -262,7 +262,9 @@ try {
             imagestring($gdImg, 3, 14, $bannerY + 47, $line3, $skyColor);
             imagestring($gdImg, 3, 14, $bannerY + 66, $line4, $yellowColor);
 
-            imagejpeg($gdImg, $filePath, 92);
+            ob_start();
+            imagejpeg($gdImg, null, 85);
+            $finalImageBytes = ob_get_clean();
             imagedestroy($gdImg);
             $savedWithGd = true;
         }
@@ -271,9 +273,26 @@ try {
     }
 
     // Fallback jika GD gagal
-    if (!$savedWithGd) {
-        file_put_contents($filePath, $imageData);
+    if (!$savedWithGd || empty($finalImageBytes)) {
+        $finalImageBytes = $imageData;
     }
+
+    // 1. Simpan foto ke database (attendance_photos) agar persisten di Vercel/Cloud
+    try {
+        $base64Image = base64_encode($finalImageBytes);
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $pStmt = $pdo->prepare("INSERT INTO attendance_photos (filename, image_data, mime_type) VALUES (?, ?, 'image/jpeg') ON CONFLICT (filename) DO UPDATE SET image_data = EXCLUDED.image_data");
+        } else {
+            $pStmt = $pdo->prepare("INSERT INTO attendance_photos (filename, image_data, mime_type) VALUES (?, ?, 'image/jpeg') ON DUPLICATE KEY UPDATE image_data = VALUES(image_data)");
+        }
+        $pStmt->execute([$filename, $base64Image]);
+    } catch (Throwable $e) {
+        // Fail-safe jika tabel DB gagal
+    }
+
+    // 2. Simpan juga ke file lokal jika direktori bisa ditulis (untuk XAMPP dev)
+    @file_put_contents($filePath, $finalImageBytes);
 
     // 9. Simpan/Update Rekaman di Tabel attendances lengkap dengan data lokasi
     $fileUrl = '/uploads/' . $filename;
