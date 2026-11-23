@@ -1,6 +1,7 @@
 {
   "version": 2,
   "outputDirectory": ".",
+  "cleanUrls": true,
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.3"
@@ -12,11 +13,20 @@
       "dest": "/api/$1.php"
     },
     {
-      "src": "/php-backend/api/(.*)",
-      "dest": "/api/$1.php"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
-      "handle": "filesystem"
+      "src": "/logo.jpg",
+      "dest": "/logo.jpg"
+    },
+    {
+      "src": "/favicon.svg",
+      "dest": "/favicon.svg"
+    },
+    {
+      "src": "/icons.svg",
+      "dest": "/icons.svg"
     },
     {
       "src": "/(.*)",
