@@ -1,21 +1,19 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "cd client && npm install && npm run build && cp -r dist/* ../",
   "outputDirectory": ".",
   "functions": {
-    "php-backend/api/*.php": {
+    "api/*.php": {
       "runtime": "vercel-php@0.7.3"
     }
   },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/php-backend/api/$1.php"
+      "dest": "/api/$1.php"
     },
     {
-      "src": "/uploads/(.*)",
-      "dest": "/php-backend/uploads/$1"
+      "src": "/php-backend/api/(.*)",
+      "dest": "/api/$1.php"
     },
     {
       "handle": "filesystem"
