@@ -223,44 +223,48 @@ try {
             $imgWidth = imagesx($gdImg);
             $imgHeight = imagesy($gdImg);
 
-            // Banner proporsional di bagian bawah foto (tinggi 92px)
-            $bannerHeight = 92;
+            // Banner proporsional di bagian bawah foto (tinggi 118px)
+            $bannerHeight = 118;
             $bannerY = max(0, $imgHeight - $bannerHeight);
 
             imagealphablending($gdImg, true);
             imagesavealpha($gdImg, true);
 
-            // Lapisan hitam semi-transparan bergradasi elegan (~78% kegelapan)
-            $overlayColor = imagecolorallocatealpha($gdImg, 10, 15, 26, 28);
+            // Lapisan hitam semi-transparan pekat (~88% kegelapan) agar teks kontras tinggi & jelas
+            $overlayColor = imagecolorallocatealpha($gdImg, 10, 15, 26, 16);
             imagefilledrectangle($gdImg, 0, $bannerY, $imgWidth, $imgHeight, $overlayColor);
 
-            // Garis pembatas aksen Cyan/Sky di puncak watermark
+            // Garis pembatas aksen Sky Blue di puncak watermark
             $accentLine = imagecolorallocate($gdImg, 56, 189, 248);
             imageline($gdImg, 0, $bannerY, $imgWidth, $bannerY, $accentLine);
             imageline($gdImg, 0, $bannerY + 1, $imgWidth, $bannerY + 1, $accentLine);
 
             $whiteColor = imagecolorallocate($gdImg, 255, 255, 255);
-            $greenColor = imagecolorallocate($gdImg, 52, 211, 153);
-            $skyColor = imagecolorallocate($gdImg, 186, 230, 253);
-            $yellowColor = imagecolorallocate($gdImg, 253, 224, 71);
+            $yellowColor = imagecolorallocate($gdImg, 254, 240, 138); // Kuning terang untuk waktu & detik
+            $greenColor = imagecolorallocate($gdImg, 52, 211, 153);   // Hijau mint untuk GPS & status
+            $skyColor = imagecolorallocate($gdImg, 186, 230, 253);    // Sky blue untuk alamat lokasi
+            $mutedColor = imagecolorallocate($gdImg, 148, 163, 184);  // Abu-abu terang
 
-            // Baris 1: Identitas User, Tipe, & Waktu Jam
-            $line1 = "[{$tipe}] {$user['nama']} ({$user['role']}) - {$timeStr} WIB";
-            // Baris 2: Hari, Tanggal & Penanda Verifikasi Anti-Manipulasi
-            $line2 = "{$fullDateStr} | Stempel Anti-Manipulasi GPS";
-            // Baris 3: Nama Lokasi / Alamat (Dibatasi agar pas di frame)
+            // Baris 1: Status Presensi & Identitas User
+            $line1 = "PRESENSI [{$tipe}] - {$user['nama']} ({$user['role']})";
+            // Baris 2: Hari, Tanggal, Jam sampai detik (WIB)
+            $line2 = "HARI: {$hariIndo} | TGL: {$tgl} {$bulanIndo} {$thn} | PUKUL: {$timeStr} WIB";
+            // Baris 3: Nama Lokasi / Alamat Lengkap
             $lokasiDisplay = $lokasiClean;
-            if (strlen($lokasiDisplay) > 68) {
-                $lokasiDisplay = substr($lokasiDisplay, 0, 65) . '...';
+            if (strlen($lokasiDisplay) > 75) {
+                $lokasiDisplay = substr($lokasiDisplay, 0, 72) . '...';
             }
-            $line3 = "Lokasi: {$lokasiDisplay}";
+            $line3 = "LOKASI: {$lokasiDisplay}";
             // Baris 4: Koordinat Geografis GPS & Toleransi Akurasi
             $line4 = "GPS: Lat {$latFormatted}, Lon {$lonFormatted} (Akurasi: +/-{$accFormatted}m)";
+            // Baris 5: Identitas Instansi & Stempel Anti-Manipulasi
+            $line5 = "SEKRETARIAT DPRD KOTA SURAKARTA - STEMPEL DIGITAL ANTI-MANIPULASI";
 
-            imagestring($gdImg, 5, 14, $bannerY + 7, $line1, $whiteColor);
-            imagestring($gdImg, 3, 14, $bannerY + 28, $line2, $greenColor);
-            imagestring($gdImg, 3, 14, $bannerY + 47, $line3, $skyColor);
-            imagestring($gdImg, 3, 14, $bannerY + 66, $line4, $yellowColor);
+            imagestring($gdImg, 5, 12, $bannerY + 6, $line1, $whiteColor);
+            imagestring($gdImg, 4, 12, $bannerY + 28, $line2, $yellowColor);
+            imagestring($gdImg, 3, 12, $bannerY + 49, $line3, $skyColor);
+            imagestring($gdImg, 3, 12, $bannerY + 69, $line4, $greenColor);
+            imagestring($gdImg, 2, 12, $bannerY + 91, $line5, $mutedColor);
 
             ob_start();
             imagejpeg($gdImg, null, 85);
