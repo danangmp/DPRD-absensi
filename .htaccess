@@ -1,0 +1,27 @@
+# ==========================================================
+# Konfigurasi Apache untuk Sistem Presensi Digital
+# ==========================================================
+
+# 1. Matikan Directory Browsing agar struktur file tidak terbuka
+Options -Indexes
+
+# 2. Pastikan Charset UTF-8 default
+AddDefaultCharset UTF-8
+
+# 3. MIME Types Lengkap
+<IfModule mod_mime.c>
+  AddType text/html .html
+  AddType text/css .css
+  AddType application/javascript .js
+  AddType image/jpeg .jpg .jpeg
+  AddType image/svg+xml .svg
+</IfModule>
+
+# 4. Browser Caching untuk Performa Cepat
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

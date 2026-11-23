@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+client/node_modules/
+client/dist/
+
+# Test Uploads (folder dipertahankan lewat .gitkeep)
+php-backend/uploads/*
+!php-backend/uploads/.gitkeep
+!php-backend/uploads/.htaccess
+!php-backend/uploads/index.php
+
+# Environment & Local Files
+.env
+.env.*
+*.local
+*.log
+
+# Local convenience scripts (optional, ignore machine-specific run scripts)
+# start_server.bat
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
