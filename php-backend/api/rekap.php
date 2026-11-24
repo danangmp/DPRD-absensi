@@ -1,7 +1,9 @@
 <?php
 // ==========================================================
 // Endpoint: rekap.php (GET)
-// Mengambil data absensi berdasarkan tanggal (default: hari ini WIB)
+// Mengambil data absensi harian atau bulanan (default: hari ini WIB)
+// Mendukung filter tanggal spesifik (tanggal=YYYY-MM-DD)
+// atau filter bulanan (bulan=YYYY-MM atau bulan=1..12 & tahun=YYYY)
 // ==========================================================
 
 header("Access-Control-Allow-Origin: *");
@@ -26,48 +28,146 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit();
 }
 
-require_once __DIR__ . '/../config.php';
+require_once file_exists(__DIR__ . '/config.php') ? __DIR__ . '/config.php' : __DIR__ . '/../config.php';
 
-// Ambil parameter tanggal (default ke hari ini Y-m-d WIB)
-$tanggal = isset($_GET['tanggal']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['tanggal'])
-    ? $_GET['tanggal']
-    : date('Y-m-d');
+// Cek apakah mode bulanan aktif
+$isMonthly = false;
+$startDate = null;
+$endDate = null;
+$selectedBulan = null;
+$selectedTahun = null;
+
+if (isset($_GET['bulan']) && !empty($_GET['bulan'])) {
+    $bulanParam = trim($_GET['bulan']);
+    if (preg_match('/^\d{4}-\d{2}$/', $bulanParam)) {
+        // Format YYYY-MM
+        $parts = explode('-', $bulanParam);
+        $selectedTahun = (int)$parts[0];
+        $selectedBulan = (int)$parts[1];
+        $isMonthly = true;
+    } elseif (is_numeric($bulanParam) && (int)$bulanParam >= 1 && (int)$bulanParam <= 12) {
+        $selectedBulan = (int)$bulanParam;
+        $selectedTahun = isset($_GET['tahun']) && is_numeric($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
+        $isMonthly = true;
+    }
+}
+
+// Filter role opsional (Magang / Staf)
+$roleFilter = isset($_GET['role']) && in_array(trim($_GET['role']), ['Magang', 'Staf']) ? trim($_GET['role']) : null;
 
 try {
-    $stmt = $pdo->prepare("
-        SELECT 
-            a.id, 
-            a.user_id, 
-            u.nama, 
-            u.role, 
-            a.tanggal, 
-            a.waktu_masuk, 
-            a.foto_masuk, 
-            a.latitude_masuk,
-            a.longitude_masuk,
-            a.akurasi_masuk,
-            a.lokasi_masuk,
-            a.waktu_pulang, 
-            a.foto_pulang,
-            a.latitude_pulang,
-            a.longitude_pulang,
-            a.akurasi_pulang,
-            a.lokasi_pulang
-        FROM attendances a 
-        JOIN users u ON a.user_id = u.id 
-        WHERE a.tanggal = :tanggal 
-        ORDER BY a.id DESC
-    ");
-    $stmt->execute([':tanggal' => $tanggal]);
-    $records = $stmt->fetchAll();
+    if ($isMonthly) {
+        $startDate = sprintf('%04d-%02d-01', $selectedTahun, $selectedBulan);
+        $endDate = date('Y-m-t', strtotime($startDate));
+        $periodeStr = sprintf('%04d-%02d', $selectedTahun, $selectedBulan);
 
-    http_response_code(200);
-    echo json_encode([
-        'success' => true,
-        'tanggal' => $tanggal,
-        'data' => $records
-    ]);
-    exit();
+        $sql = "
+            SELECT 
+                a.id, 
+                a.user_id, 
+                u.nama, 
+                u.role, 
+                a.tanggal, 
+                a.waktu_masuk, 
+                a.foto_masuk, 
+                a.latitude_masuk,
+                a.longitude_masuk,
+                a.akurasi_masuk,
+                a.lokasi_masuk,
+                a.waktu_pulang, 
+                a.foto_pulang,
+                a.latitude_pulang,
+                a.longitude_pulang,
+                a.akurasi_pulang,
+                a.lokasi_pulang
+            FROM attendances a 
+            JOIN users u ON a.user_id = u.id 
+            WHERE a.tanggal >= :start_date AND a.tanggal <= :end_date
+        ";
+
+        $params = [
+            ':start_date' => $startDate,
+            ':end_date'   => $endDate,
+        ];
+
+        if ($roleFilter !== null) {
+            $sql .= " AND u.role = :role";
+            $params[':role'] = $roleFilter;
+        }
+
+        $sql .= " ORDER BY a.tanggal ASC, a.waktu_masuk ASC, u.nama ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $records = $stmt->fetchAll();
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'mode' => 'bulanan',
+            'periode' => $periodeStr,
+            'bulan' => $selectedBulan,
+            'tahun' => $selectedTahun,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total' => count($records),
+            'data' => $records
+        ]);
+        exit();
+
+    } else {
+        // Mode harian default
+        $tanggal = isset($_GET['tanggal']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['tanggal'])
+            ? $_GET['tanggal']
+            : date('Y-m-d');
+
+        $sql = "
+            SELECT 
+                a.id, 
+                a.user_id, 
+                u.nama, 
+                u.role, 
+                a.tanggal, 
+                a.waktu_masuk, 
+                a.foto_masuk, 
+                a.latitude_masuk,
+                a.longitude_masuk,
+                a.akurasi_masuk,
+                a.lokasi_masuk,
+                a.waktu_pulang, 
+                a.foto_pulang,
+                a.latitude_pulang,
+                a.longitude_pulang,
+                a.akurasi_pulang,
+                a.lokasi_pulang
+            FROM attendances a 
+            JOIN users u ON a.user_id = u.id 
+            WHERE a.tanggal = :tanggal
+        ";
+
+        $params = [':tanggal' => $tanggal];
+
+        if ($roleFilter !== null) {
+            $sql .= " AND u.role = :role";
+            $params[':role'] = $roleFilter;
+        }
+
+        $sql .= " ORDER BY a.id DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $records = $stmt->fetchAll();
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'mode' => 'harian',
+            'tanggal' => $tanggal,
+            'total' => count($records),
+            'data' => $records
+        ]);
+        exit();
+    }
 
 } catch (PDOException $e) {
     http_response_code(500);
@@ -77,4 +177,3 @@ try {
     ]);
     exit();
 }
-
