@@ -23,7 +23,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 // ----------------------------------------------------------
 if ($method === 'GET') {
     try {
-        $stmt = $pdo->query("SELECT id, nama, role FROM users ORDER BY id ASC");
+        $stmt = $pdo->query("SELECT id, nama, role FROM users ORDER BY LOWER(TRIM(nama)) ASC, id ASC");
         $users = $stmt->fetchAll();
 
         http_response_code(200);
