@@ -215,10 +215,46 @@ try {
         exit();
     }
 
-    // 8. Watermarking Profesional menggunakan PHP GD Library (Permanen pada Piksel Foto)
+    // 8. Verifikasi Anti Layar Hitam / Lensa Tertutup & Watermarking PHP GD Library
+    $gdImg = @imagecreatefromstring($imageData);
+    if ($gdImg !== false) {
+        $sampleCols = 16;
+        $sampleRows = 16;
+        $imgWidthCheck = imagesx($gdImg);
+        $imgHeightCheck = imagesy($gdImg);
+        $scanMaxY = max(1, (int)floor($imgHeightCheck * 0.76));
+        $sumLum = 0.0;
+        $maxLum = 0.0;
+        $sampleCount = 0;
+
+        for ($r = 0; $r < $sampleRows; $r++) {
+            $y = min($scanMaxY - 1, (int)floor(($r + 0.5) * $scanMaxY / $sampleRows));
+            for ($c = 0; $c < $sampleCols; $c++) {
+                $x = min($imgWidthCheck - 1, (int)floor(($c + 0.5) * $imgWidthCheck / $sampleCols));
+                $rgba = imagecolorsforindex($gdImg, imagecolorat($gdImg, $x, $y));
+                $lum = 0.299 * $rgba['red'] + 0.587 * $rgba['green'] + 0.114 * $rgba['blue'];
+                $sumLum += $lum;
+                if ($lum > $maxLum) {
+                    $maxLum = $lum;
+                }
+                $sampleCount++;
+            }
+        }
+
+        $avgLum = $sampleCount > 0 ? ($sumLum / $sampleCount) : 255.0;
+        if ($sampleCount > 0 && $avgLum < 12.0 && $maxLum < 25.0) {
+            imagedestroy($gdImg);
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Foto kamera terdeteksi layar hitam atau lensa tertutup! Absensi belum dicatat. Pastikan kamera terbuka dan wajah terlihat di lingkaran, lalu absen ulang.'
+            ]);
+            exit();
+        }
+    }
+
     $savedWithGd = false;
     try {
-        $gdImg = @imagecreatefromstring($imageData);
         if ($gdImg !== false) {
             $imgWidth = imagesx($gdImg);
             $imgHeight = imagesy($gdImg);
